@@ -21,6 +21,7 @@
 """
 
 from flask import Flask, render_template, request, redirect, url_for, session, flash
+from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 from pathlib import Path
 
@@ -89,9 +90,9 @@ def init_db():
     cur.execute("SELECT COUNT(*) FROM users")
     if cur.fetchone()[0] == 0:
         users = [
-            ("admin",   "Admin123",   "admin"),
-            ("analyst", "Analyst123", "user"),
-            ("student", "Student123", "user"),
+            ("admin",   generate_password_hash("Admin123"),   "admin"),
+            ("analyst", generate_password_hash("Analyst123"), "user"),
+            ("student", generate_password_hash("Student123"), "user"),
         ]
         cur.executemany(
             "INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
@@ -163,8 +164,9 @@ def login():
         # V-01: Consulta vulnerable en UNA SOLA LÍNEA para que el comentario
         # SQL (--) funcione correctamente en SQLite y el payload surta efecto.
         # Payload de ejemplo: usuario = admin' --  / password = (cualquier cosa)
-        query = f"SELECT id, username, role FROM users WHERE username = '{username}' AND password = '{password}'"
+        #correccion
 
+        query = "SELECT id, username, role FROM users WHERE username = ? AND password = ?"
         conn = get_connection()
         try:
             user = conn.execute(query).fetchone()
@@ -227,11 +229,12 @@ def search():
         # ---------------------------------------------------
         # V-02: Búsqueda vulnerable también en una sola línea.
         # Payload: %' UNION SELECT id, username, password, role FROM users --
-        raw_query = f"SELECT id, title, author, category FROM books WHERE title LIKE '%{term}%' OR author LIKE '%{term}%' OR category LIKE '%{term}%'"
+        raw_query = f"SELECT id, title, author, category FROM books WHERE title LIKE ? OR author LIKE ? OR category LIKE ?"
+        term = f"%{term}%"
 
         conn = get_connection()
         try:
-            books = conn.execute(raw_query).fetchall()
+            books = conn.execute(raw_query, (term, term, term)).fetchall()
         except Exception as e:
             flash(f"Error en la base de datos: {e}", "error")
         conn.close()
