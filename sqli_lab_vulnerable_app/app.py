@@ -280,6 +280,8 @@ def logout():
 # ejecutar código Python arbitrario en el servidor.
 # Nunca debe usarse debug=True en producción.
 # ---------------------------------------------------------------
+
+
 if __name__ == "__main__":
     init_db()
     debug_mode = os.getenv("FLASK_DEBUG", "False").lower() == "true"
