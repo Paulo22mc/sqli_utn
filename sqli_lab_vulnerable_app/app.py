@@ -166,10 +166,10 @@ def login():
         # Payload de ejemplo: usuario = admin' --  / password = (cualquier cosa)
         #correccion
 
-        query = "SELECT id, username, role FROM users WHERE username = ? AND password = ?"
+        query = "SELECT id, username,password, role FROM users WHERE username = ?"
         conn = get_connection()
         try:
-            user = conn.execute(query).fetchone()
+            user = conn.execute(query, (username,)).fetchone()
         except Exception as e:
             # El error de SQLite se muestra directamente — también
             # es información sensible que no debe exponerse.
@@ -178,7 +178,7 @@ def login():
             return render_template("login.html", last_query=query)
         conn.close()
 
-        if user:
+        if user and check_password_hash(user["password"], password):
             session["user_id"]  = user["id"]
             session["username"] = user["username"]
             session["role"]     = user["role"]
@@ -186,7 +186,7 @@ def login():
             flash("Inicio de sesión exitoso.", "success")
             return redirect(url_for("dashboard"))
 
-        log_event("LOGIN_FAIL", username, f"query={query}")
+        log_event("LOGIN_FAIL", username)
         flash("Credenciales incorrectas.", "error")
 
     return render_template("login.html")
