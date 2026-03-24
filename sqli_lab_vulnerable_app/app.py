@@ -23,6 +23,7 @@ import os
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_wtf.csrf import CSRFProtect
 import sqlite3
 from pathlib import Path
 
@@ -37,7 +38,7 @@ app = Flask(__name__)
 # entorno y nunca commitearse al repositorio.
 # ---------------------------------------------------------------
 app.config["SECRET_KEY"] = os.getenv("FLASK_SECRET_KEY")
-
+csrf = CSRFProtect(app)
 # ---------------------------------------------------------------
 # Conexión a la base de datos
 # ---------------------------------------------------------------
